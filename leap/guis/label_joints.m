@@ -641,6 +641,7 @@ initializeGUI();
             '--net-name="leap_cnn"'
             '--epochs=15'
             '--val-size=0.1'
+            '--rotate-angle=5'
             };
         cmd = strjoin(cmd);
         disp(cmd)

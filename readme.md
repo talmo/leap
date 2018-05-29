@@ -1,6 +1,7 @@
 # LEAP
 
 ![LEAP Estimates Animal Pose](https://raw.githubusercontent.com/talmo/leap/master/examples/supp_mov1-long_clip.gif "LEAP Estimates Animal Pose")
+
 _Full movie: [YouTube](https://youtu.be/ZmLQNbCbstk)_
 
 This repository contains code for **LEAP** (_**L**EAP **E**stimates **A**nimal **P**ose_), a framework for animal body part position estimation via deep learning.
@@ -41,12 +42,10 @@ For the Python environment, we recommend [Anaconda 5.1.0](https://www.anaconda.c
 
 The versions below were used during development of LEAP but other versions will also likely work.
 
-Additional libraries required are easily installable via the pip package manager:
+Libraries required are easily installable via the pip package manager:
 ```
 pip install -Iv numpy==1.14.1
 pip install -Iv h5py==2.7.1
-pip install -Iv tensorflow-gpu==1.6.0
-pip install -Iv keras==2.1.4
 pip install -Iv clize==4.0.3
 ```
 
@@ -54,6 +53,13 @@ You will also need OpenCV 3 with Python bindings. We recommend using [skvark's e
 ```
 pip install -Iv opencv-python==3.4.0.12
 ```
+
+For GPU support, you'll want to first install the CUDA drivers with CuDNN and then install these packages:
+``
+pip install -Iv tensorflow-gpu==1.6.0
+pip install -Iv keras==2.1.4
+``
+See the [TensorFlow installation guide](https://www.tensorflow.org/install/) for more info.
 
 ## Usage
 Guides coming soon.
