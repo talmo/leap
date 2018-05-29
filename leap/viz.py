@@ -79,8 +79,12 @@ def gallery(array, ncols=4):
     """ Utility function for tiling a set of images into a grid. """
     array = np.transpose(array.squeeze(), (2,0,1))
     nindex, height, width = array.shape
-    nrows = nindex//ncols
-    assert nindex == nrows*ncols
+    nrows = int(np.ceil(nindex / ncols))
+    if nindex != nrows * ncols:
+        delta = (nrows * ncols) - nindex
+        array = np.concatenate((array, np.zeros((delta, height, width), dtype=array.dtype)), axis=0)
+
+    assert len(array) == nrows * ncols
     
     result = (array.reshape(nrows, ncols, height, width)
               .swapaxes(1,2)
@@ -91,12 +95,6 @@ def show_confmap_grid(net, X, Y, plot=True, save_path=None, show_figure=False):
     """ 
     Shows predictions from the model using every channel in the confmap.
     """
-    # Check inputs
-    # if np.isscalar(idx):
-    #     X = box[idx]
-    #     Y = confmap[idx]
-    # if len(idx) == 2:
-    #     X, Y = idx
     if X.ndim == 2:
         X = X[None,...,None]
     if X.ndim == 3:

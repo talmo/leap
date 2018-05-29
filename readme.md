@@ -12,7 +12,7 @@ We are still working on documentation and preparing parts of the code. See the F
 
 ## Features
 - [ ] Tracking and alignment code
-- [ ] Cluster sampling GUI
+- [x] Cluster sampling GUI
 - [x] Skeleton creation GUI (`create_skeleton`)
 - [x] GUI for labeling new dataset (`label_joints`)
 - [x] Network training through the labeling GUI
@@ -67,7 +67,7 @@ Guides coming soon.
 ### Preprocessing
 
 ### GUI Workflow
-1. **Cluster sampling**: _Coming soon._
+1. **Cluster sampling**: Call `cluster_sample` from MATLAB commandline to launch GUI.
 2. **Create skeleton**: Call `create_skeleton` from MATLAB commandline to launch GUI.
 3. **Label data and train**: Call `label_joints` from MATLAB commandline to launch GUI.
 4. **Batch estimation**: _Coming soon._

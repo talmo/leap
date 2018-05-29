@@ -106,3 +106,7 @@ venv.bak/
 # MATLAB
 *.asv
 
+
+# LEAP-specific
+models/fast_train/
+leap/toolbox/io/.lastdir
