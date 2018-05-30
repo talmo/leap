@@ -608,7 +608,7 @@ initializeGUI();
         answers = inputdlg(param_questions,'Generate training set',ones(size(param_questions)),string(defaults));
         if isempty(answers); return; end
         
-        answers = cf(@(x)eval(x),answers);
+        answers(2:end) = cf(@(x)eval(x),answers(2:end));
         names = {'savePath','scale','horizontalOrientation','sigma','normalizeConfmaps','postShuffle','testFraction'}';
         args = [names, answers]';
         

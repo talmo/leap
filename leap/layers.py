@@ -20,6 +20,8 @@
    All rights reserved.
 """
 
+import numpy as np
+
 import keras.backend as K
 from keras.legacy import interfaces
 from keras.engine import Layer
@@ -159,7 +161,8 @@ def _find_maxima(x):
     cols = K.expand_dims(cols, -2)
     rows = K.expand_dims(rows, -2)
 
-    maxima = K.concatenate([rows, cols, maxima], -2)
+    # maxima = K.concatenate([rows, cols, maxima], -2) # y, x, val
+    maxima = K.concatenate([cols, rows, maxima], -2) # x, y, val
 
     return maxima
 

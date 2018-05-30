@@ -10,7 +10,7 @@ import re
 
 from clize import run
 from utils import find_weights, find_best_weights, preprocess    
-
+from layers import Maxima2D
 
 def tf_find_peaks(x):
     """ Finds the maximum value in each channel and returns the location and value.
@@ -55,7 +55,8 @@ def convert_to_peak_outputs(model, include_confmaps=False):
     if include_confmaps:
         return keras.Model(model.input, [Lambda(tf_find_peaks)(confmaps), confmaps])
     else:
-        return keras.Model(model.input, Lambda(tf_find_peaks)(confmaps))
+        # return keras.Model(model.input, Lambda(tf_find_peaks)(confmaps))
+        return keras.Model(model.input, Maxima2D()(confmaps))
 
 
 def predict_box(box_path, model_path, out_path, *, box_dset="/box", epoch=None, verbose=True, overwrite=False, save_confmaps=False):
@@ -83,9 +84,9 @@ def predict_box(box_path, model_path, out_path, *, box_dset="/box", epoch=None, 
         
         weights_paths, epochs, val_losses = find_weights(model_path)
         
-        if epoch is None:
+        if epoch == None and len(val_losses) > 0:
             weights_path = weights_paths[np.argmin(val_losses)]
-        elif epoch == "final":
+        elif epoch == "final" or (epoch == None and len(val_losses) == 0):
             weights_path = os.path.join(model_path, "final_model.h5")
         else:
             weights_path = weights_paths[epoch]
@@ -99,7 +100,7 @@ def predict_box(box_path, model_path, out_path, *, box_dset="/box", epoch=None, 
 
     # Create output path
     if out_path[-3:] != ".h5":
-        if model_name is None:
+        if model_name == None:
             out_path = os.path.join(out_path, os.path.basename(box_path))
         else:
             out_path = os.path.join(out_path, model_name, os.path.basename(box_path))

@@ -32,8 +32,11 @@ def find_weights(model_path):
 def find_best_weights(model_path):
     """ Returns the path to the model weights with the lowest validation loss. """
     weights_paths, epochs, val_losses = find_weights(model_path)
-    idx = np.argmin(val_losses)
-    return weights_paths[idx]
+    if len(val_losses) > 0:
+        idx = np.argmin(val_losses)
+        return weights_paths[idx]
+    else:
+        return None
 
 
 def load_dataset(data_path, X_dset="box", Y_dset="confmaps", permute=(0,3,2,1)):
