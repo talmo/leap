@@ -89,28 +89,37 @@ else
 end
     
 swap_names = {
-    {'eyeL'     , 'eyeR'     }
+%     {'eyeL'     , 'eyeR'     }
     {'forelegL1', 'forelegR1'}
     {'forelegL2', 'forelegR2'}
     {'forelegL3', 'forelegR3'}
     {'forelegL4', 'forelegR4'}
-    {'midlegR1' , 'midlegL1' }
-    {'midlegR2' , 'midlegL2' }
-    {'midlegR3' , 'midlegL3' }
-    {'midlegR4' , 'midlegL4' }
-    {'hindlegR1', 'hindlegL1'}
-    {'hindlegR2', 'hindlegL2'}
-    {'hindlegR3', 'hindlegL3'}
-    {'hindlegR4', 'hindlegL4'}
-    {'wingL'    , 'wingR'    }
-    
-    {'forepawR1', 'forepawL1'}
-    {'forepawR2', 'forepawL2'}
-    {'forepawR3', 'forepawL3'}
-    {'hindpawR1', 'hindpawL1'}
-    {'hindpawR2', 'hindpawL2'}
-    {'hindpawR3', 'hindpawL3'}
+    {'midlegL1' , 'midlegR1' }
+    {'midlegL2' , 'midlegR2' }
+    {'midlegL3' , 'midlegR3' }
+    {'midlegL4' , 'midlegR4' }
+    {'hindlegL1', 'hindlegR1'}
+    {'hindlegL2', 'hindlegR2'}
+    {'hindlegL3', 'hindlegR3'}
+    {'hindlegL4', 'hindlegR4'}
+%     {'wingL'    , 'wingR'    }
+    {'forepawL1', 'forepawR1'}
+    {'forepawL2', 'forepawR2'}
+    {'forepawL3', 'forepawR3'}
+    {'hindpawL1', 'hindpawR1'}
+    {'hindpawL2', 'hindpawR2'}
+    {'hindpawL3', 'hindpawR3'}
 };
+
+% Check for *L/*R naming pattern (e.g., {'wingL','wingR'})
+% TODO: regex that also finds numbered pattern
+namesL = jointNames(endsWith(jointNames,'L'));
+for i = 1:numel(namesL)
+    nameR = [namesL{i}(1:end-1) 'R'];
+    if ismember(nameR,jointNames)
+        swap_names{end+1} = {namesL{i}, nameR};
+    end
+end
 
 % Swap channels accordingly
 for i = 1:numel(swap_names)

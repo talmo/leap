@@ -116,7 +116,9 @@ def train(data_path, *,
     reduce_lr_patience=3, 
     reduce_lr_min_delta=1e-5, 
     reduce_lr_cooldown=0, 
-    reduce_lr_min_lr=1e-10):
+    reduce_lr_min_lr=1e-10,
+    save_every_epoch=False
+    ):
     """
     Trains the network and saves the intermediate results to an output directory.
 
@@ -142,12 +144,16 @@ def train(data_path, *,
     :param reduce_lr_min_delta: Minimum change in error required before reducing LR (see ReduceLROnPlateau)
     :param reduce_lr_cooldown: How many epochs to wait after reduction before LR can be reduced again (see ReduceLROnPlateau)
     :param reduce_lr_min_lr: Minimum that the LR can be reduced down to (see ReduceLROnPlateau)
+    :param save_every_epoch: Save weights at every epoch. If False, saves only initial, final and best weights.
     """
 
     # Load
+    print("data_path:", data_path)
     box, confmap = load_dataset(data_path, X_dset=box_dset, Y_dset=confmap_dset)
     viz_sample = (box[viz_idx], confmap[viz_idx])
     box, confmap, val_box, val_confmap, train_idx, val_idx = train_val_split(box, confmap, val_size=val_size, shuffle=preshuffle)
+    print("box.shape:", box.shape)
+    print("val_box.shape:", val_box.shape)
 
     # Pull out metadata
     img_size = box.shape[1:]
@@ -160,7 +166,8 @@ def train(data_path, *,
         data_name = os.path.splitext(os.path.basename(data_path))[0]
     if run_name == None:
         # Ex: "WangMice-DiegoCNN_v1.0_filters=64_rot=15_lrfactor=0.1_lrmindelta=1e-05"
-        run_name = "%s-%s_filters=%d_rot=%d_lrfactor=%.1f_lrmindelta=%g" % (data_name, net_name, filters, rotate_angle, reduce_lr_factor, reduce_lr_min_delta)
+        # run_name = "%s-%s_filters=%d_rot=%d_lrfactor=%.1f_lrmindelta=%g" % (data_name, net_name, filters, rotate_angle, reduce_lr_factor, reduce_lr_min_delta)
+        run_name = "%s-%s_epochs=%d" % (data_name, net_name, epochs)
     print("data_name:", data_name)
     print("run_name:", run_name)
 
@@ -180,7 +187,7 @@ def train(data_path, *,
              "epochs": epochs, "batch_size": batch_size, "batches_per_epoch": batches_per_epoch,
              "val_batches_per_epoch": val_batches_per_epoch, "viz_idx": viz_idx, "reduce_lr_factor": reduce_lr_factor,
              "reduce_lr_patience": reduce_lr_patience, "reduce_lr_min_delta": reduce_lr_min_delta,
-             "reduce_lr_cooldown": reduce_lr_cooldown, "reduce_lr_min_lr": reduce_lr_min_lr})
+             "reduce_lr_cooldown": reduce_lr_cooldown, "reduce_lr_min_lr": reduce_lr_min_lr, "save_every_epoch": save_every_epoch})
 
     # Save initial network
     model.save(os.path.join(run_path, "initial_model.h5"))
@@ -201,7 +208,10 @@ def train(data_path, *,
                                           patience=reduce_lr_patience, verbose=1, mode="auto",
                                           epsilon=reduce_lr_min_delta, cooldown=reduce_lr_cooldown,
                                           min_lr=reduce_lr_min_lr)
-    checkpointer = ModelCheckpoint(filepath=os.path.join(run_path, "weights/weights.{epoch:03d}-{val_loss:.9f}.h5"), verbose=1, save_best_only=False)
+    if save_every_epoch:
+        checkpointer = ModelCheckpoint(filepath=os.path.join(run_path, "weights/weights.{epoch:03d}-{val_loss:.9f}.h5"), verbose=1, save_best_only=False)
+    else:
+        checkpointer = ModelCheckpoint(filepath=os.path.join(run_path, "best_model.h5"), verbose=1, save_best_only=True)
     viz_grid_callback = LambdaCallback(on_epoch_end=lambda epoch, logs: show_confmap_grid(model, *viz_sample, plot=True, save_path=os.path.join(run_path, "viz_confmaps/confmaps_%03d.png" % epoch), show_figure=False))
     viz_pred_callback = LambdaCallback(on_epoch_end=lambda epoch, logs: show_pred(model, *viz_sample, save_path=os.path.join(run_path, "viz_pred/pred_%03d.png" % epoch), show_figure=False))
     
@@ -236,6 +246,8 @@ def train(data_path, *,
     # Save final model
     model.history = history_callback.history
     model.save(os.path.join(run_path, "final_model.h5"))
+
+    
 
 
 

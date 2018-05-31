@@ -31,6 +31,7 @@ config.shuffleFrames = false; % shuffle frame order
 config.autoSave = true; % save before going to a new frame
 config.clickNearest = false; % true = click moves nearest node; false = selected node
 config.draggable = true; % false = cannot drag joint markers
+config.altArrowsToMoveNodes = true; % false = arrow keys move nodes, alt+arrows changes frames
 config.zoomBoxFrames = [-250, 250]; % number of frames in the status zoomed in box (pre, post)
 config.imgFigPos = [835 341 709 709]; % main labeling figure window
 config.ctrlFigPos = [1545 342 374 708]; % control/reference window
@@ -335,6 +336,11 @@ initializeGUI();
             'Callback', @(h,~)toggleDraggableMarkers(h.Value), ...
             'String','Draggable markers','TooltipString','If unchecked, joint markers can only be moved by clicking or keyboard.');
         
+        % Alt + arrows to move nodes
+        uicontrol(ui.status.configButtons,'Style','checkbox','Value',config.altArrowsToMoveNodes, ...
+            'Callback', @(h,~)setConfig('altArrowsToMoveNodes',h.Value), ...
+            'String','Alt + arrow keys move markers','TooltipString','If unchecked, move markers with Alt + arrow keys, change frames with arrow keys.');
+        
         % Export confidence maps
         uicontrol(ui.status.configButtons,'Style','pushbutton', ...
             'Callback', @(h,~)generateTrainingSet(), ...
@@ -393,10 +399,16 @@ initializeGUI();
     
     function keyPress(~,evt)
     % Hotkeys
+        % exclusive modifier flags:
         noModifier = isempty(evt.Modifier);
         shiftOnly = isequal(evt.Modifier, {'shift'});
         ctrlOnly = isequal(evt.Modifier, {'control'});
         altOnly = isequal(evt.Modifier, {'alt'});
+        
+        % non-exclusive:
+        altPressed = ismember({'alt'}, evt.Modifier);
+        ctrlPressed = ismember({'control'}, evt.Modifier);
+        shiftPressed = ismember({'shift'}, evt.Modifier);
         
         switch evt.Key
             case 'q'
@@ -423,74 +435,90 @@ initializeGUI();
                 end
             case 'downarrow'
                 dXY = [0 1];
-                if noModifier
-                    nudgeNode(dXY)
-                elseif shiftOnly
-                    nudgeNode(dXY * 5)
-                elseif ctrlOnly
-                    nudgeSegment(dXY)
-                    
+                if (config.altArrowsToMoveNodes && altPressed) || ~config.altArrowsToMoveNodes
+                    if noModifier
+                        nudgeNode(dXY)
+                    elseif shiftOnly
+                        nudgeNode(dXY * 5)
+                    elseif ctrlOnly
+                        nudgeSegment(dXY)
+                    end
                 end
             case 'uparrow'
                 dXY = [0 -1];
-                if noModifier
-                    nudgeNode(dXY)
-                elseif shiftOnly
-                    nudgeNode(dXY * 5)
-                elseif ctrlOnly
-                    nudgeSegment(dXY)
+                if (config.altArrowsToMoveNodes && altPressed) || ~config.altArrowsToMoveNodes
+                    if noModifier
+                        nudgeNode(dXY)
+                    elseif shiftOnly
+                        nudgeNode(dXY * 5)
+                    elseif ctrlOnly
+                        nudgeSegment(dXY)
+                    end
                 end
             case 'leftarrow'
-                dXY = [-1 0];
-                if noModifier
-                    nudgeNode(dXY)
-                elseif shiftOnly
-                    nudgeNode(dXY * 5)
-                elseif ctrlOnly
-                    nudgeSegment(dXY)
-                elseif altOnly
+                if (config.altArrowsToMoveNodes && altPressed) || (~config.altArrowsToMoveNodes && ~altPressed)
+                    dXY = [-1 0] - (shiftPressed * 4);
+                    if ctrlPressed; nudgeSegment(dXY);
+                    else; nudgeNode(dXY); end
+                else
+                    dt = -1 - (shiftPressed * 4);
                     if config.shuffleFrames
                         idx = find(shuffleIdx == ui.status.currentFrame);
-                        goToFrame(shuffleIdx(mod(idx-1-1, numFrames) + 1))
+                        goToFrame(shuffleIdx(mod(idx-1+dt, numFrames) + 1))
                     else
-                        goToFrame(mod(ui.status.currentFrame-1-1, numFrames) + 1)
+                        goToFrame(mod(ui.status.currentFrame-1+dt, numFrames) + 1)
                     end
                 end
             case 'rightarrow'
-                dXY = [1 0];
-                if noModifier
-                    nudgeNode(dXY)
-                elseif shiftOnly
-                    nudgeNode(dXY * 5)
-                elseif ctrlOnly
-                    nudgeSegment(dXY)
-                elseif altOnly
+                if (config.altArrowsToMoveNodes && altPressed) || (~config.altArrowsToMoveNodes && ~altPressed)
+                    dXY = [1 0] + (shiftPressed * 4);
+                    if ctrlPressed; nudgeSegment(dXY);
+                    else; nudgeNode(dXY); end
+                else
+                    dt = 1 + (shiftPressed * 4);
                     if config.shuffleFrames
                         idx = find(shuffleIdx == ui.status.currentFrame);
-                        goToFrame(shuffleIdx(mod(idx-1+1, numFrames) + 1))
+                        goToFrame(shuffleIdx(mod(idx-1+dt, numFrames) + 1))
                     else
-                        goToFrame(mod(ui.status.currentFrame-1+1, numFrames) + 1)
+                        goToFrame(mod(ui.status.currentFrame-1+dt, numFrames) + 1)
                     end
                 end
             case 'space'
-                % Find unlabeled frames for current joint
-                unlabeledIdxs = setdiff(find(squeeze(any(isnan(labels.positions(ui.status.selectedNode,:,:)),2))), ui.status.currentFrame);
+                % Get labeling status for all frames
+                labeled = getStatus() == 2;
+                
+                % Consider current joint only if shift is pressed
+                if shiftPressed; labeled = labeled(ui.status.selectedNode,:); 
+                else; labeled = all(labeled,1); end
+                
+                % Find unlabeled frames excluding current frame
+                unlabeledIdxs = setdiff(find(labeled), ui.status.currentFrame);
                 
                 if ~isempty(unlabeledIdxs)
-                    goToFrame(datasample(unlabeledIdxs,1));
+                    if ctrlPressed
+                        % Go to random unlabeled frame
+                        goToFrame(datasample(unlabeledIdxs,1));
+                    else
+                        % Go to first unlabeled frame
+                        goToFrame(unlabeledIdxs(1))
+                    end
+                    
                 end
             case 'g'
                 % go to frame dialog
-                if ctrlOnly
-                    answer = inputdlg('Skip to frame index:','Skip to frame',1,{num2str(ui.status.currentFrame)});
-                    try
-                        idx = round(str2double(answer));
-                        if idx >= 1 && idx <= numFrames
-                            goToFrame(idx);
-                        end
-                    catch
+%                 if ctrlOnly
+                % TODO:
+                %   - custom dialog box that starts focused on the textbox
+                %     and returns after pressing Enter/Esc
+                answer = inputdlg('Skip to frame index:','Skip to frame',1,{num2str(ui.status.currentFrame)});
+                try
+                    idx = round(str2double(answer));
+                    if idx >= 1 && idx <= numFrames
+                        goToFrame(idx);
                     end
+                catch
                 end
+%                 end
             case 'f'
                 markAllCorrect();
             otherwise
@@ -561,12 +589,18 @@ initializeGUI();
         end
         
         % TODO: better system for choosing final vs best validation model
-        if exists(ff(modelPath, 'final_model.h5'))
-            numValidationSamples = numel(loadvar(ff(modelPath,'training_info.mat'),'val_idx'));
-%             numWeights = numel(dir_files(ff(modelPath,'weights')));
-            if numValidationSamples < 500
-                modelPath = ff(modelPath,'final_model.h5');
-            end
+%         if exists(ff(modelPath, 'final_model.h5'))
+%             numValidationSamples = numel(loadvar(ff(modelPath,'training_info.mat'),'val_idx'));
+% %             numWeights = numel(dir_files(ff(modelPath,'weights')));
+%             if numValidationSamples < 500
+%                 modelPath = ff(modelPath,'final_model.h5');
+%             end
+%         end
+        numValidationSamples = numel(loadvar(ff(modelPath,'training_info.mat'),'val_idx'));
+        if exists(ff(modelPath, 'best_model.h5')) && numValidationSamples > 500
+            modelPath = ff(modelPath, 'best_model.h5');
+        else
+            modelPath = ff(modelPath, 'final_model.h5');
         end
         
         % Predict
@@ -589,6 +623,20 @@ initializeGUI();
         
         % Log event
         addToHistory(['Initialized with model: ' modelPath])
+        
+        % Calculate error rate on labels
+        labeled = all(getStatus() == 2,1);
+        pos_gt = labels.positions(:,:,labeled);
+        pos_pred = labels.initialization(:,:,labeled);
+        pred_metrics = compute_errors(pos_pred,pos_gt);
+        
+        % Display errors
+        printf('Error: mean = %.2f, s.d. = %.2f', mean(pred_metrics.euclidean(:)), std(pred_metrics.euclidean(:)))
+        prcs = [50 75 90];
+        prc_errs = prctile(pred_metrics.euclidean(:), prcs);
+        for i = 1:numel(prcs)
+            printf('       %d%% = %.3f', prcs(i), prc_errs(i))
+        end
         
         % Replot
         goToFrame(ui.status.currentFrame);
