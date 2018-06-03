@@ -75,7 +75,7 @@ zoomBoxWindow = config.zoomBoxFrames(1):config.zoomBoxFrames(2);
         
         % Ask for path to skeleton file
         if isequal(skeletonPath,true) || ~exists(labels.savePath)
-            skeletonPath = uibrowse('*.mat',funpath(true),'Select skeleton MAT file');
+            skeletonPath = uibrowse('*.mat',[],'Select skeleton MAT file');
         end
         
         % Open box file
@@ -647,12 +647,11 @@ initializeGUI();
             'Scale: for resizing images'
             'Horizontal orientation: animal is facing right/left if true (for mirroring)'
             'Sigma: kernel size for confidence maps'
-            'Normalize confidence maps: scale maps to [0,1] range'
             'Post shuffle: shuffle data before saving (useful for reproducible dataset order)'
             'Test fraction: fraction of labeled data to hold out for testing'
             };
         defaultSavePath = ff(fileparts(boxPath), 'training', [get_filename(boxPath,true) '.h5']);
-        defaults = {defaultSavePath, 1, true, 5,true, true, 0};
+        defaults = {defaultSavePath, 1, true, 5, true, 0};
         answers = inputdlg(param_questions,'Generate training set',ones(size(param_questions)),string(defaults));
         if isempty(answers); return; end
         
@@ -666,9 +665,29 @@ initializeGUI();
     end
     function fastTrain()
         % Generate a training set for fast training from current labels
+        
+        param_questions = {
+            'Scale: for resizing images', 1
+            'Horizontal orientation: animal is facing right/left if true (for mirroring)', true
+            'Sigma: kernel size for confidence maps', 5
+            'Epochs: number of rounds of training', 15
+            'Validation fraction: fraction of images to leave out for validation', 0.1
+            'Rotation: angle of rotations to apply for augmentation during training', 5
+            };
+        defaults = param_questions(:,2);
+        param_questions = param_questions(:,1);
+        answers = inputdlg(param_questions,'Fast training parameters',ones(size(param_questions)),string(defaults));
+        if isempty(answers); return; end
+        
+        % Parse user input
+        answers = cf(@(x)eval(x),answers);
+        fields = {'scale','horizontalOrientation','sigma','epochs','valFraction','rotateAngle'}';
+        answers = cell2struct(answers,fields);
+        
+        % Generate training set file
         dataPath = [tempname '.h5'];
-        dataPath = generate_training_set(boxPath,'savePath',dataPath,'scale',1,...
-            'horizontalOrientation',true,'sigma',5,'normalizeConfmaps',true,...
+        dataPath = generate_training_set(boxPath,'savePath',dataPath,'scale',answers.scale,...
+            'horizontalOrientation',answers.horizontalOrientation,'sigma',answers.sigma,'normalizeConfmaps',true,...
             'postShuffle',true,'testFraction',0);
         
         % Build paths
@@ -687,9 +706,9 @@ initializeGUI();
             ['--base-output-path="' modelsFolder '"']
             ['--run-name="' runName '"']
             '--net-name="leap_cnn"'
-            '--epochs=15'
-            '--val-size=0.1'
-            '--rotate-angle=5'
+            sprintf('--epochs=%d',answers.epochs)
+            sprintf('--val-size=%f', answers.valFraction)
+            sprintf('--rotate-angle=%d', answers.rotateAngle)
             };
         cmd = strjoin(cmd);
         disp(cmd)
