@@ -32,6 +32,8 @@ from keras.backend import int_shape, permute_dimensions
 
 from keras.backend import tf
 
+from keras.layers import Conv2D, Add
+
 __all__ = ['UpSampling2D', 'Maxima2D']
 
 
@@ -241,3 +243,26 @@ class Maxima2D(Layer):
         config = {'data_format': self.data_format}
         base_config = super(Maxima2D, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
+
+
+def residual_bottleneck_module(x_in, output_filters=32, bottleneck_factor=2, prefix="res", activation="relu", initializer="glorot_normal"):
+    # Get input shape and channels
+    in_shape = K.int_shape(x_in)
+    input_filters = in_shape[3]
+    
+    # Bottleneck filters are proportional to the output filters
+    bottleneck_filters = output_filters // bottleneck_factor
+    
+    # Bottleneck block
+    x = Conv2D(filters=bottleneck_filters, kernel_size=1, padding="same", activation=activation, kernel_initializer=initializer, name=prefix + "_Conv1")(x_in)
+    x = Conv2D(filters=bottleneck_filters, kernel_size=3, padding="same", activation=activation, kernel_initializer=initializer, name=prefix + "_Conv2")(x)
+    x = Conv2D(filters=output_filters, kernel_size=1, padding="same", activation=activation, kernel_initializer=initializer, name=prefix + "_Conv3")(x)
+    
+    # 1x1 conv if input channels are different from output channels
+    if output_filters != input_filters:
+        x_in = Conv2D(filters=output_filters, kernel_size=1, padding="same", activation=activation, kernel_initializer=initializer, name=prefix + "_ConvSkip")(x_in)
+    
+    # Residual connection
+    x = Add(name=prefix + "_AddRes")([x_in, x])
+    
+    return x

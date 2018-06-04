@@ -107,7 +107,7 @@ def train(data_path, *,
     preshuffle=True,
     filters=64, 
     rotate_angle=15, 
-    epochs=100, 
+    epochs=50, 
     batch_size=32, 
     batches_per_epoch=50, 
     val_batches_per_epoch=10, 
@@ -117,7 +117,9 @@ def train(data_path, *,
     reduce_lr_min_delta=1e-5, 
     reduce_lr_cooldown=0, 
     reduce_lr_min_lr=1e-10,
-    save_every_epoch=False
+    save_every_epoch=False,
+    amsgrad=False,
+    upsampling_layers=False,
     ):
     """
     Trains the network and saves the intermediate results to an output directory.
@@ -145,6 +147,8 @@ def train(data_path, *,
     :param reduce_lr_cooldown: How many epochs to wait after reduction before LR can be reduced again (see ReduceLROnPlateau)
     :param reduce_lr_min_lr: Minimum that the LR can be reduced down to (see ReduceLROnPlateau)
     :param save_every_epoch: Save weights at every epoch. If False, saves only initial, final and best weights.
+    :param amsgrad: Use AMSGrad variant of optimizer. Can help with training accuracy on rare examples (see Reddi et al., 2018)
+    :param upsampling_layers: Use simple bilinear upsampling layers as opposed to learned transposed convolutions
     """
 
     # Load
@@ -172,7 +176,7 @@ def train(data_path, *,
     print("run_name:", run_name)
 
     # Create network
-    model = create_model(net_name, img_size, num_output_channels, filters=filters, summary=True)
+    model = create_model(net_name, img_size, num_output_channels, filters=filters, amsgrad=amsgrad, upsampling_layers=upsampling_layers, summary=True)
     if model == None:
         print("Could not find model:", net_name)
         return
@@ -187,7 +191,8 @@ def train(data_path, *,
              "epochs": epochs, "batch_size": batch_size, "batches_per_epoch": batches_per_epoch,
              "val_batches_per_epoch": val_batches_per_epoch, "viz_idx": viz_idx, "reduce_lr_factor": reduce_lr_factor,
              "reduce_lr_patience": reduce_lr_patience, "reduce_lr_min_delta": reduce_lr_min_delta,
-             "reduce_lr_cooldown": reduce_lr_cooldown, "reduce_lr_min_lr": reduce_lr_min_lr, "save_every_epoch": save_every_epoch})
+             "reduce_lr_cooldown": reduce_lr_cooldown, "reduce_lr_min_lr": reduce_lr_min_lr, 
+             "save_every_epoch": save_every_epoch, "amsgrad": amsgrad, "upsampling_layers": upsampling_layers})
 
     # Save initial network
     model.save(os.path.join(run_path, "initial_model.h5"))
@@ -247,7 +252,7 @@ def train(data_path, *,
     model.history = history_callback.history
     model.save(os.path.join(run_path, "final_model.h5"))
 
-    
+
 
 
 
