@@ -10,6 +10,8 @@ This repository contains code for **LEAP** (_**L**EAP **E**stimates **A**nimal *
 
 We are still working on documentation and preparing parts of the code. See the Features section below for an overview and status of each component.
 
+We recommend starting with the (Tutorial: Training Leap From Scratch)[https://github.com/talmo/leap/wiki/Tutorial:-Training-LEAP-from-scratch].
+
 ## Features
 - [ ] Tracking and alignment code
 - [x] Cluster sampling GUI
@@ -62,7 +64,7 @@ pip install -Iv keras==2.1.4
 See the [TensorFlow installation guide](https://www.tensorflow.org/install/) for more info.
 
 ## Usage
-Guides coming soon.
+Refer to the (Tutorial: Training Leap From Scratch)[https://github.com/talmo/leap/wiki/Tutorial:-Training-LEAP-from-scratch].
 
 ### Preprocessing
 
