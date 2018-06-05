@@ -656,7 +656,7 @@ initializeGUI();
         if isempty(answers); return; end
         
         answers(2:end) = cf(@(x)eval(x),answers(2:end));
-        names = {'savePath','scale','horizontalOrientation','sigma','normalizeConfmaps','postShuffle','testFraction'}';
+        names = {'savePath','scale','horizontalOrientation','sigma','postShuffle','testFraction'}';
         args = [names, answers]';
         
         addToHistory('Generating training set.')
