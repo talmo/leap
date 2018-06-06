@@ -111,20 +111,23 @@ swap_names = {
     {'hindpawL3', 'hindpawR3'}
 };
 
-% Check for *L/*R naming pattern (e.g., {'wingL','wingR'})
-% TODO: regex that also finds numbered pattern
-namesL = jointNames(endsWith(jointNames,'L'));
-for i = 1:numel(namesL)
-    nameR = [namesL{i}(1:end-1) 'R'];
+% Check for *L/*R naming pattern (e.g., {{'wingL','wingR'}, {'legR1','legL1'}})
+baseNames = regexp(jointNames,'(.*)L([0-9]*)$','tokens');
+isSymmetric = ~cellfun(@isempty,baseNames);
+for i = horz(find(isSymmetric))
+    nameR = [baseNames{i}{1}{1} 'R' baseNames{i}{1}{2}];
     if ismember(nameR,jointNames)
-        swap_names{end+1} = {namesL{i}, nameR};
+        swap_names{end+1} = {jointNames{i}, nameR};
     end
 end
 
 % Swap channels accordingly
+printf('Symmetric channels:')
 for i = 1:numel(swap_names)
     [~,swap_idx] = ismember(swap_names{i}, jointNames);
     if any(swap_idx == 0); continue; end
+    printf('    %s (%d) <-> %s (%d)', jointNames{swap_idx(1)}, swap_idx(1), ...
+        jointNames{swap_idx(2)}, swap_idx(2))
     
     joints_flip(swap_idx,:,:) = joints_flip(fliplr(horz(swap_idx)),:,:);
     confmaps_flip(:,:,swap_idx,:) = confmaps_flip(:,:,fliplr(horz(swap_idx)),:);

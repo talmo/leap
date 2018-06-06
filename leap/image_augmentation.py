@@ -31,11 +31,11 @@ def transform_imgs(X, theta=(-180,180), scale=1.0):
     for i in range(len(X)):
         if X[i].ndim == 2:
             # Single channel image
-            X[i] = cv2.warpAffine(X[i], T, img_size)
+            X[i] = cv2.warpAffine(X[i], T, img_size[::-1])
         else:
             # Multi-channel image
             for c in range(X[i].shape[-1]):
-                X[i][...,c] = cv2.warpAffine(X[i][...,c], T, img_size)
+                X[i][...,c] = cv2.warpAffine(X[i][...,c], T, img_size[::-1])
     
     # Pull the single image back out of the list
     if single_img:
