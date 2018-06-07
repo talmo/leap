@@ -110,3 +110,4 @@ venv.bak/
 # LEAP-specific
 models/fast_train/
 leap/toolbox/io/.lastdir
+data/examples/
