@@ -1,6 +1,6 @@
 # LEAP
 
-![LEAP Estimates Animal Pose](https://raw.githubusercontent.com/talmo/leap/master/examples/supp_mov1-long_clip.gif "LEAP Estimates Animal Pose")
+![LEAP Estimates Animal Pose](https://raw.githubusercontent.com/talmo/leap/master/docs/supp_mov1-long_clip.gif "LEAP Estimates Animal Pose")
 
 _Full movie: [YouTube](https://youtu.be/ZmLQNbCbstk)_
 

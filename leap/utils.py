@@ -4,16 +4,22 @@ import re
 from time import time
 import h5py
 
-def versions():
-    """ Prints version strings for finicky libraries. """
+def versions(list_devices=False):
+    """ Prints system info and version strings for finicky libraries. """
     import keras
     import tensorflow as tf
     import h5py
-
+    import platform
+    
+    print("Platform:", platform.platform())
+    print("h5py:\n" + h5py.version.info)
+    # print("numpy:",np.version.full_version) # h5py already reports this
     print("Keras:", str(keras.__version__))
     print("Tensorflow:", str(tf.__version__))
-    print("h5py:\n", h5py.version.info)
-    print("numpy:",np.version.full_version)
+
+    if list_devices:
+        from tensorflow.python.client import device_lib
+        print("Devices:\n" + str(device_lib.list_local_devices()))
 
 
 def find_weights(model_path):

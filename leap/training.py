@@ -10,10 +10,10 @@ import clize
 import keras
 from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, LambdaCallback
 
-import models
-from image_augmentation import PairedImageAugmenter, MultiInputOutputPairedImageAugmenter
-from viz import show_pred, show_confmap_grid, plot_history
-from utils import load_dataset
+from . import models
+from .image_augmentation import PairedImageAugmenter, MultiInputOutputPairedImageAugmenter
+from .viz import show_pred, show_confmap_grid, plot_history
+from .utils import load_dataset
 
 def train_val_split(X, Y, val_size=0.15, shuffle=True):
     """ Splits datasets into training and validation sets. """

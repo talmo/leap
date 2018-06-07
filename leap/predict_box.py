@@ -7,10 +7,10 @@ import keras.models
 from keras.layers import Lambda
 import tensorflow as tf
 import re
-
 from clize import run
-from utils import find_weights, find_best_weights, preprocess    
-from layers import Maxima2D
+
+from .utils import find_weights, find_best_weights, preprocess    
+from .layers import Maxima2D
 
 def tf_find_peaks(x):
     """ Finds the maximum value in each channel and returns the location and value.
@@ -151,6 +151,7 @@ def predict_box(box_path, model_path, out_path, *, box_dset="/box", epoch=None, 
     prediction_runtime = time() - t0
     if verbose:
         print("Predicted [%.1fs]" % prediction_runtime)
+        print("Prediction performance: %.3f FPS" % (num_samples / prediction_runtime))
     
     # Save
     t0 = time()
@@ -186,7 +187,7 @@ def predict_box(box_path, model_path, out_path, *, box_dset="/box", epoch=None, 
         print("Saved [%.1fs]" % (time() - t0))
 
         print("Total runtime: %.1f mins" % (total_runtime / 60))
-        print("Performance: %.3f FPS" % (num_samples / total_runtime))
+        print("Total performance: %.3f FPS" % (num_samples / total_runtime))
         
         
 if __name__ == "__main__":
