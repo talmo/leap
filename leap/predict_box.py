@@ -9,8 +9,12 @@ import tensorflow as tf
 import re
 from clize import run
 
-from .utils import find_weights, find_best_weights, preprocess    
-from .layers import Maxima2D
+try:
+    from .utils import find_weights, find_best_weights, preprocess    
+    from .layers import Maxima2D
+except:
+    from utils import find_weights, find_best_weights, preprocess    
+    from layers import Maxima2D
 
 def tf_find_peaks(x):
     """ Finds the maximum value in each channel and returns the location and value.

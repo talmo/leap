@@ -4,7 +4,10 @@ from keras.models import Model
 from keras.layers import Input, Conv2D, Conv2DTranspose, Add, MaxPooling2D
 from keras.optimizers import Adam
 
-from .layers import residual_bottleneck_module, UpSampling2D
+try:
+    from .layers import residual_bottleneck_module, UpSampling2D
+except:
+    from layers import residual_bottleneck_module, UpSampling2D
 
 def leap_cnn(img_size, output_channels, filters=64, upsampling_layers=False, amsgrad=False, summary=False):
     """
