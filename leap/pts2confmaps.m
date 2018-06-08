@@ -15,7 +15,8 @@ if nargin < 3 || isempty(sigma); sigma = 5; end
 if nargin < 4 || isempty(normalize); normalize = true; end
 
 confmaps = NaN(sz(1), sz(2), size(pts,1));
-[XX,YY] = meshgrid(1:sz(1),1:sz(2));
+xv = 1:sz(2); yv = 1:sz(1);
+[XX,YY] = meshgrid(xv,yv);
 
 for i = 1:size(pts,1)
     pt = pts(i,:);
