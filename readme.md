@@ -63,12 +63,26 @@ pip install -Iv keras==2.1.4
 ```
 See the [TensorFlow installation guide](https://www.tensorflow.org/install/) for more info.
 
-You can install this library as a python package by downloading this git repository:
-`git clone https://github.com/talmo/leap.git`
-then typing: `pip install -e leap`
+If you don't have a GPU that supports CUDA, download the regular tensorflow distribution:
 
-If you are using `anaconda` to manage different python environments, it is highly
-recommended that you use this matlab script to manage your python envs within matlab:
+```bash
+pip install tensorflow
+```
+
+You can install this library as a python package by downloading this git repository:
+
+```bash
+git clone https://github.com/talmo/leap.git
+```
+
+then typing:
+```bash
+pip install -e leap # installs the leap directory using pip
+```
+
+If you are using [anaconda](https://conda.io/docs/user-guide/getting-started.html)
+to manage different python environments, it is highly recommended that you use this
+matlab script to manage your python envs within matlab:
 [condalab](https://github.com/wingillis/condalab) (see their readme for how to use it)
 
 ## Usage
