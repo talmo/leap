@@ -700,7 +700,7 @@ initializeGUI();
 
         % Create CLI command for training
         cmd = {
-            '/Users/wgillis/anaconda2/envs/leap/bin/python'
+            'python'
             ['"' ff(basePath, 'training.py') '"']
             ['"' dataPath '"']
             ['--base-output-path="' modelsFolder '"']

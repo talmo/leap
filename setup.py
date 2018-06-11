@@ -2,5 +2,9 @@ from setuptools import setup
 
 setup(
   name='LEAP',
-  version='0.0.1'
+  version='0.0.1',
+  install_requires=[
+    'matplotlib',
+    'PyQt5'
+  ]
 )
