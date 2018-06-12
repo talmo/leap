@@ -2,13 +2,13 @@ function confmaps = pts2confmaps(pts, sz, sigma, normalize)
 %PTS2CONFMAPS Generate confidence maps centered at specified points.
 % Usage:
 %   confmaps = pts2confmaps(pts, sz, sigma)
-% 
+%
 % Args:
 %   pts: N x 2
 %   sz: [rows cols]
 %   sigma: filter size (default: 5)
 %   normalize: outputs maps in [0, 1] rather than PDF (default: true)
-% 
+%
 % See also: label_joints
 
 if nargin < 3 || isempty(sigma); sigma = 5; end

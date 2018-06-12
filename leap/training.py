@@ -10,58 +10,54 @@ import clize
 import keras
 from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, LambdaCallback
 
-try:
-    from . import models
-    from .image_augmentation import PairedImageAugmenter, MultiInputOutputPairedImageAugmenter
-    from .viz import show_pred, show_confmap_grid, plot_history
-except:
-    import models
-    from image_augmentation import PairedImageAugmenter, MultiInputOutputPairedImageAugmenter
-    from viz import show_pred, show_confmap_grid, plot_history
-    from utils import load_dataset
+from leap import models
+from leap.image_augmentation import PairedImageAugmenter, MultiInputOutputPairedImageAugmenter
+from leap.viz import show_pred, show_confmap_grid, plot_history
+from leap.utils import load_dataset
+
 
 def train_val_split(X, Y, val_size=0.15, shuffle=True):
     """ Splits datasets into training and validation sets. """
-    
+
     if val_size < 1:
         val_size = int(np.round(len(X) * val_size))
-        
+
     idx = np.arange(len(X))
     if shuffle:
         np.random.shuffle(idx)
-    
+
     val_idx = idx[:val_size]
     idx = idx[val_size:]
-    
+
     return X[idx], Y[idx], X[val_idx], Y[val_idx], idx, val_idx
 
 
 def create_run_folders(run_name, base_path="models", clean=False):
     """ Creates subfolders necessary for outputs of training. """
-    
+
     def is_empty_run(run_path):
         weights_path = os.path.join(run_path, "weights")
         has_weights_folder = os.path.exists(weights_path)
         return not has_weights_folder or len(os.listdir(weights_path)) == 0
-    
+
     run_path = os.path.join(base_path, run_name)
-    
+
     if not clean:
         initial_run_path = run_path
         i = 1
         while os.path.exists(run_path): #and not is_empty_run(run_path):
             run_path = "%s_%02d" % (initial_run_path, i)
             i += 1
-            
+
     if os.path.exists(run_path):
         shutil.rmtree(run_path)
-        
+
     os.makedirs(run_path)
     os.makedirs(os.path.join(run_path, "weights"))
     os.makedirs(os.path.join(run_path, "viz_pred"))
     os.makedirs(os.path.join(run_path, "viz_confmaps"))
     print("Created folder:", run_path)
-    
+
     return run_path
 
 
@@ -70,7 +66,7 @@ class LossHistory(keras.callbacks.Callback):
     def __init__(self, run_path):
         super().__init__()
         self.run_path = run_path
-    
+
     def on_train_begin(self, logs={}):
         self.history = []
 
@@ -100,27 +96,27 @@ def create_model(net_name, img_size, output_channels, **kwargs):
 
     return compile_model(img_size, output_channels, **kwargs)
 
-def train(data_path, *, 
+def train(data_path, *,
     base_output_path="models",
-    run_name=None, 
+    run_name=None,
     data_name=None,
     net_name="leap_cnn",
-    clean=False, 
-    box_dset="box", 
-    confmap_dset="confmaps", 
-    val_size=0.15, 
+    clean=False,
+    box_dset="box",
+    confmap_dset="confmaps",
+    val_size=0.15,
     preshuffle=True,
-    filters=64, 
-    rotate_angle=15, 
-    epochs=50, 
-    batch_size=32, 
-    batches_per_epoch=50, 
-    val_batches_per_epoch=10, 
-    viz_idx=0, 
-    reduce_lr_factor=0.1, 
-    reduce_lr_patience=3, 
-    reduce_lr_min_delta=1e-5, 
-    reduce_lr_cooldown=0, 
+    filters=64,
+    rotate_angle=15,
+    epochs=50,
+    batch_size=32,
+    batches_per_epoch=50,
+    val_batches_per_epoch=10,
+    viz_idx=0,
+    reduce_lr_factor=0.1,
+    reduce_lr_patience=3,
+    reduce_lr_min_delta=1e-5,
+    reduce_lr_cooldown=0,
     reduce_lr_min_lr=1e-10,
     save_every_epoch=False,
     amsgrad=False,
@@ -188,7 +184,7 @@ def train(data_path, *,
 
     # Initialize run directories
     run_path = create_run_folders(run_name, base_path=base_output_path, clean=clean)
-    savemat(os.path.join(run_path, "training_info.mat"), 
+    savemat(os.path.join(run_path, "training_info.mat"),
             {"data_path": data_path, "val_idx": val_idx, "train_idx": train_idx,
              "base_output_path": base_output_path, "run_name": run_name, "data_name": data_name,
              "net_name": net_name, "clean": clean, "box_dset": box_dset, "confmap_dset": confmap_dset,
@@ -196,7 +192,7 @@ def train(data_path, *,
              "epochs": epochs, "batch_size": batch_size, "batches_per_epoch": batches_per_epoch,
              "val_batches_per_epoch": val_batches_per_epoch, "viz_idx": viz_idx, "reduce_lr_factor": reduce_lr_factor,
              "reduce_lr_patience": reduce_lr_patience, "reduce_lr_min_delta": reduce_lr_min_delta,
-             "reduce_lr_cooldown": reduce_lr_cooldown, "reduce_lr_min_lr": reduce_lr_min_lr, 
+             "reduce_lr_cooldown": reduce_lr_cooldown, "reduce_lr_min_lr": reduce_lr_min_lr,
              "save_every_epoch": save_every_epoch, "amsgrad": amsgrad, "upsampling_layers": upsampling_layers})
 
     # Save initial network
@@ -214,7 +210,7 @@ def train(data_path, *,
 
     # Initialize training callbacks
     history_callback = LossHistory(run_path=run_path)
-    reduce_lr_callback = ReduceLROnPlateau(monitor="val_loss", factor=reduce_lr_factor, 
+    reduce_lr_callback = ReduceLROnPlateau(monitor="val_loss", factor=reduce_lr_factor,
                                           patience=reduce_lr_patience, verbose=1, mode="auto",
                                           epsilon=reduce_lr_min_delta, cooldown=reduce_lr_cooldown,
                                           min_lr=reduce_lr_min_lr)
@@ -224,7 +220,7 @@ def train(data_path, *,
         checkpointer = ModelCheckpoint(filepath=os.path.join(run_path, "best_model.h5"), verbose=1, save_best_only=True)
     viz_grid_callback = LambdaCallback(on_epoch_end=lambda epoch, logs: show_confmap_grid(model, *viz_sample, plot=True, save_path=os.path.join(run_path, "viz_confmaps/confmaps_%03d.png" % epoch), show_figure=False))
     viz_pred_callback = LambdaCallback(on_epoch_end=lambda epoch, logs: show_pred(model, *viz_sample, save_path=os.path.join(run_path, "viz_pred/pred_%03d.png" % epoch), show_figure=False))
-    
+
     # Train!
     epoch0 = 0
     t0_train = time()
@@ -252,7 +248,7 @@ def train(data_path, *,
     # Compute total elapsed time for training
     elapsed_train = time() - t0_train
     print("Total runtime: %.1f mins" % (elapsed_train / 60))
-        
+
     # Save final model
     model.history = history_callback.history
     model.save(os.path.join(run_path, "final_model.h5"))

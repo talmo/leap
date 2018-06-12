@@ -9,38 +9,34 @@ import tensorflow as tf
 import re
 from clize import run
 
-try:
-    from .utils import find_weights, find_best_weights, preprocess    
-    from .layers import Maxima2D
-except:
-    from utils import find_weights, find_best_weights, preprocess    
-    from layers import Maxima2D
+from leap.utils import find_weights, find_best_weights, preprocess
+from leap.layers import Maxima2D
 
 def tf_find_peaks(x):
     """ Finds the maximum value in each channel and returns the location and value.
     Args:
         x: rank-4 tensor (samples, height, width, channels)
-        
+
     Returns:
         peaks: rank-3 tensor (samples, [x, y, val], channels)
     """
-    
+
     # Store input shape
     in_shape = tf.shape(x)
-    
+
     # Flatten height/width dims
     flattened = tf.reshape(x, [in_shape[0], -1, in_shape[-1]])
-    
+
     # Find peaks in linear indices
     idx = tf.argmax(flattened, axis=1)
-    
+
     # Convert linear indices to subscripts
     rows = tf.floor_div(tf.cast(idx,tf.int32), in_shape[1])
     cols = tf.floormod(tf.cast(idx,tf.int32), in_shape[1])
-    
+
     # Dumb way to get actual values without indexing
     vals = tf.reduce_max(flattened, axis=1)
-    
+
     # Return N x 3 x C tensor
     return tf.stack([
         tf.cast(cols, tf.float32),
@@ -55,7 +51,7 @@ def convert_to_peak_outputs(model, include_confmaps=False):
         confmaps = model.output[-1]
     else:
         confmaps = model.output
-    
+
     if include_confmaps:
         return keras.Model(model.input, [Lambda(tf_find_peaks)(confmaps), confmaps])
     else:
@@ -65,7 +61,7 @@ def convert_to_peak_outputs(model, include_confmaps=False):
 
 def predict_box(box_path, model_path, out_path, *, box_dset="/box", epoch=None, verbose=True, overwrite=False, save_confmaps=False):
     """
-    Predict and save peak coordinates for a box. 
+    Predict and save peak coordinates for a box.
 
     :param box_path: path to HDF5 file with box dataset
     :param model_path: path to Keras weights file or run folder with weights subfolder
@@ -76,25 +72,25 @@ def predict_box(box_path, model_path, out_path, *, box_dset="/box", epoch=None, 
     :param overwrite: if True and out_path exists, file will be overwritten
     :param save_confmaps: if True, saves the full confidence maps as additional datasets in the output file (very slow)
     """
-    
+
     if verbose:
         print("model_path:", model_path)
-        
+
     # Find model weights
     model_name = None
     weights_path = model_path
     if os.path.isdir(model_path):
         model_name = os.path.basename(model_path)
-        
+
         weights_paths, epochs, val_losses = find_weights(model_path)
-        
+
         if epoch == None and len(val_losses) > 0:
             weights_path = weights_paths[np.argmin(val_losses)]
         elif epoch == "final" or (epoch == None and len(val_losses) == 0):
             weights_path = os.path.join(model_path, "final_model.h5")
         else:
             weights_path = weights_paths[epoch]
-    
+
     # Input data
     box = h5py.File(box_path,"r")[box_dset]
     num_samples = box.shape[0]
@@ -109,12 +105,12 @@ def predict_box(box_path, model_path, out_path, *, box_dset="/box", epoch=None, 
         else:
             out_path = os.path.join(out_path, model_name, os.path.basename(box_path))
         os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    
+
     model_name = os.path.basename(model_path)
 
     if verbose:
         print("Output:", out_path)
-    
+
     t0_all = time()
     if os.path.exists(out_path):
         if overwrite:
@@ -130,18 +126,18 @@ def predict_box(box_path, model_path, out_path, *, box_dset="/box", epoch=None, 
     if verbose:
         print("weights_path:", weights_path)
         print("Loaded model: %d layers, %d params" % (len(model.layers), model.count_params()))
-        
+
     # Load data and preprocess (normalize)
     t0 = time()
     X = preprocess(box[:])
     if verbose:
         print("Loaded [%.1fs]" % (time() - t0))
-    
+
     # Evaluate
     t0 = time()
     if save_confmaps:
         Ypk, confmaps = model_peaks.predict(X)
-        
+
         # Quantize
         confmaps_min = confmaps.min()
         confmaps_max = confmaps.max()
@@ -156,7 +152,7 @@ def predict_box(box_path, model_path, out_path, *, box_dset="/box", epoch=None, 
     if verbose:
         print("Predicted [%.1fs]" % prediction_runtime)
         print("Prediction performance: %.3f FPS" % (num_samples / prediction_runtime))
-    
+
     # Save
     t0 = time()
     with h5py.File(out_path, "w") as f:
@@ -186,13 +182,13 @@ def predict_box(box_path, model_path, out_path, *, box_dset="/box", epoch=None, 
         total_runtime = time() - t0_all
         f.attrs["total_runtime_secs"] = total_runtime
         f.attrs["prediction_runtime_secs"] = prediction_runtime
-    
+
     if verbose:
         print("Saved [%.1fs]" % (time() - t0))
 
         print("Total runtime: %.1f mins" % (total_runtime / 60))
         print("Total performance: %.3f FPS" % (num_samples / total_runtime))
-        
-        
+
+
 if __name__ == "__main__":
     run(predict_box)
