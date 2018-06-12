@@ -18,7 +18,7 @@ We recommend starting with the [Tutorial: Training Leap From Scratch](https://gi
 - [x] Skeleton creation GUI (`create_skeleton`)
 - [x] GUI for labeling new dataset (`label_joints`)
 - [x] Network training through the labeling GUI
-- [x] MATLAB (`predict_box.m`) and Python (`leap.training`) interfaces for predicting on new data
+- [x] MATLAB (`predict_box.m`) and Python (`leap.predict_box`) interfaces for predicting on new data
 - [ ] GUI for predicting on new data
 - [x] Training data + labels for main fly dataset used in analyses
 - [x] Trained network for predicting on main fly dataset

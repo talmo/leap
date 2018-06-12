@@ -15,6 +15,7 @@ from leap.image_augmentation import PairedImageAugmenter, MultiInputOutputPaired
 from leap.viz import show_pred, show_confmap_grid, plot_history
 from leap.utils import load_dataset
 
+
 def train_val_split(X, Y, val_size=0.15, shuffle=True):
     """ Splits datasets into training and validation sets. """
 
