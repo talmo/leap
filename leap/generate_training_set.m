@@ -7,11 +7,13 @@ t0_all = stic;
 defaults = struct();
 defaults.savePath = [];
 defaults.scale = 1;
+defaults.mirroring = true; % flip images and adjust confidence maps to augment dataset
 defaults.horizontalOrientation = true; % animal is facing right/left if true (for mirroring)
 defaults.sigma = 5; % kernel size for confidence maps
 defaults.normalizeConfmaps = true; % scale maps to [0,1] range
 defaults.postShuffle = true; % shuffle data before saving (useful for reproducible dataset order)
 defaults.testFraction = 0; % separate these data from training and validation sets
+defaults.compress = false; % use GZIP compression to save the outputs
 
 params = parse_params(varargin,defaults);
 
@@ -73,77 +75,57 @@ stocf('Generated confidence maps') % 15 sec for 192x192x32x500
 varsize(confmaps)
 
 %% Augment by mirroring
-% Flip images
-if params.horizontalOrientation
-    box_flip = flipud(box);
-    try box_no_seg_flip = flipud(box_no_seg); catch; end
-    try box_raw_flip = flipud(box_raw); catch; end
-    confmaps_flip = flipud(confmaps);
-    joints_flip = joints; joints_flip(:,2,:) = size(box,1) - joints_flip(:,2,:);
-else
-    box_flip = fliplr(box);
-    try box_no_seg_flip = fliplr(box_no_seg); catch; end
-    try box_raw_flip = fliplr(box_raw); catch; end
-    confmaps_flip = fliplr(confmaps);
-    joints_flip = joints; joints_flip(:,1,:) = size(box,2) - joints_flip(:,1,:);
-end
-    
-swap_names = {
-%     {'eyeL'     , 'eyeR'     }
-    {'forelegL1', 'forelegR1'}
-    {'forelegL2', 'forelegR2'}
-    {'forelegL3', 'forelegR3'}
-    {'forelegL4', 'forelegR4'}
-    {'midlegL1' , 'midlegR1' }
-    {'midlegL2' , 'midlegR2' }
-    {'midlegL3' , 'midlegR3' }
-    {'midlegL4' , 'midlegR4' }
-    {'hindlegL1', 'hindlegR1'}
-    {'hindlegL2', 'hindlegR2'}
-    {'hindlegL3', 'hindlegR3'}
-    {'hindlegL4', 'hindlegR4'}
-%     {'wingL'    , 'wingR'    }
-    {'forepawL1', 'forepawR1'}
-    {'forepawL2', 'forepawR2'}
-    {'forepawL3', 'forepawR3'}
-    {'hindpawL1', 'hindpawR1'}
-    {'hindpawL2', 'hindpawR2'}
-    {'hindpawL3', 'hindpawR3'}
-};
-
-% Check for *L/*R naming pattern (e.g., {{'wingL','wingR'}, {'legR1','legL1'}})
-baseNames = regexp(jointNames,'(.*)L([0-9]*)$','tokens');
-isSymmetric = ~cellfun(@isempty,baseNames);
-for i = horz(find(isSymmetric))
-    nameR = [baseNames{i}{1}{1} 'R' baseNames{i}{1}{2}];
-    if ismember(nameR,jointNames)
-        swap_names{end+1} = {jointNames{i}, nameR};
+if params.mirroring
+    % Flip images
+    if params.horizontalOrientation
+        box_flip = flipud(box);
+        try box_no_seg_flip = flipud(box_no_seg); catch; end
+        try box_raw_flip = flipud(box_raw); catch; end
+        confmaps_flip = flipud(confmaps);
+        joints_flip = joints; joints_flip(:,2,:) = size(box,1) - joints_flip(:,2,:);
+    else
+        box_flip = fliplr(box);
+        try box_no_seg_flip = fliplr(box_no_seg); catch; end
+        try box_raw_flip = fliplr(box_raw); catch; end
+        confmaps_flip = fliplr(confmaps);
+        joints_flip = joints; joints_flip(:,1,:) = size(box,2) - joints_flip(:,1,:);
     end
+
+    % Check for *L/*R naming pattern (e.g., {{'wingL','wingR'}, {'legR1','legL1'}})
+    swap_names = {};
+    baseNames = regexp(jointNames,'(.*)L([0-9]*)$','tokens');
+    isSymmetric = ~cellfun(@isempty,baseNames);
+    for i = horz(find(isSymmetric))
+        nameR = [baseNames{i}{1}{1} 'R' baseNames{i}{1}{2}];
+        if ismember(nameR,jointNames)
+            swap_names{end+1} = {jointNames{i}, nameR};
+        end
+    end
+
+    % Swap channels accordingly
+    printf('Symmetric channels:')
+    for i = 1:numel(swap_names)
+        [~,swap_idx] = ismember(swap_names{i}, jointNames);
+        if any(swap_idx == 0); continue; end
+        printf('    %s (%d) <-> %s (%d)', jointNames{swap_idx(1)}, swap_idx(1), ...
+            jointNames{swap_idx(2)}, swap_idx(2))
+
+        joints_flip(swap_idx,:,:) = joints_flip(fliplr(horz(swap_idx)),:,:);
+        confmaps_flip(:,:,swap_idx,:) = confmaps_flip(:,:,fliplr(horz(swap_idx)),:);
+    end
+
+    % Merge
+    [box,flipped] = cellcat({box,box_flip},4);
+    joints = cat(3, joints, joints_flip);
+    try box_raw = cat(4,box_raw,box_raw_flip); catch; end
+    try box_no_seg = cat(4,box_no_seg,box_no_seg_flip); catch; end
+    confmaps = cat(4, confmaps, confmaps_flip);
+
+    labeledIdx = [labeledIdx(:); labeledIdx(:)];
+    try exptID = [exptID(:); exptID(:)]; catch; end
+    try framesIdx = [framesIdx(:); framesIdx(:)]; catch; end
+    try idxs = [idxs(:); idxs(:)]; catch; end
 end
-
-% Swap channels accordingly
-printf('Symmetric channels:')
-for i = 1:numel(swap_names)
-    [~,swap_idx] = ismember(swap_names{i}, jointNames);
-    if any(swap_idx == 0); continue; end
-    printf('    %s (%d) <-> %s (%d)', jointNames{swap_idx(1)}, swap_idx(1), ...
-        jointNames{swap_idx(2)}, swap_idx(2))
-    
-    joints_flip(swap_idx,:,:) = joints_flip(fliplr(horz(swap_idx)),:,:);
-    confmaps_flip(:,:,swap_idx,:) = confmaps_flip(:,:,fliplr(horz(swap_idx)),:);
-end
-
-% Merge
-[box,flipped] = cellcat({box,box_flip},4);
-joints = cat(3, joints, joints_flip);
-try box_raw = cat(4,box_raw,box_raw_flip); catch; end
-try box_no_seg = cat(4,box_no_seg,box_no_seg_flip); catch; end
-confmaps = cat(4, confmaps, confmaps_flip);
-
-labeledIdx = [labeledIdx(:); labeledIdx(:)];
-try exptID = [exptID(:); exptID(:)]; catch; end
-try framesIdx = [framesIdx(:); framesIdx(:)]; catch; end
-try idxs = [idxs(:); idxs(:)]; catch; end
 
 %% Post-shuffle
 shuffleIdx = vert(1:numFrames*2);
@@ -204,20 +186,20 @@ stic;
 if exists(savePath); delete(savePath); end
 
 % Training data
-h5save(savePath,box)
+h5save(savePath,box,[],'compress',params.compress)
 h5save(savePath,labeledIdx)
 h5save(savePath,shuffleIdx)
-try h5save(savePath,box_no_seg); catch; end
-try h5save(savePath,box_raw); catch; end
+try h5save(savePath,box_no_seg,[],'compress',params.compress); catch; end
+try h5save(savePath,box_raw,[],'compress',params.compress); catch; end
 try h5save(savePath,exptID); catch; end
 try h5save(savePath,framesIdx); catch; end
-h5save(savePath,joints)
-h5save(savePath,confmaps)
+h5save(savePath,joints,[],'compress',params.compress)
+h5save(savePath,confmaps,[],'compress',params.compress)
 
 % Testing data
 if numTestFrames > 0
     h5save(savePath,trainIdx)
-    h5savegroup(savePath,testing)
+    h5savegroup(savePath,testing,[],'compress',params.compress)
 end
 
 % Metadata

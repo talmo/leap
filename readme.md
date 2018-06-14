@@ -30,7 +30,7 @@ We recommend starting with the [Tutorial: Training Leap From Scratch](https://gi
 ### Pre-requisites
 All neural network and GPU functionality is implemented in Python. The library was designed to be easy to use by providing commandline interfaces, but it can also be used programatically if the MATLAB GUIs are not required.
 
-For the Python environment, we recommend [Anaconda 5.1.0](https://www.anaconda.com/download/) with Python 3.6.4.
+For the Python environment, we recommend [Anaconda 5.1.0](https://www.anaconda.com/download/) with Python 3.6.4. Note that **Python 2.x is not supported**.
 
 For GPU support, you'll want to first install the CUDA drivers with CuDNN and then install these packages:
 ```bash
@@ -49,12 +49,13 @@ Please note that CPU execution will be MUCH slower (10-20x) than on a GPU. Consi
 ### Automated installation
 To get started with using LEAP, open up MATLAB and download the repository:
 ```matlab
-!git clone https://github.com/talmo/leap.git
+>> !git clone https://github.com/talmo/leap.git
 ```
 
 Then, install the package and add to the MATLAB path:
 ```matlab
-install_leap
+>> cd leap
+>> install_leap
 ```
 
 That's it!

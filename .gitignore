@@ -108,6 +108,7 @@ venv.bak/
 
 
 # LEAP-specific
-models/fast_train/
+data/*
+!data/readme.md
+models/*
 leap/toolbox/io/.lastdir
-data/examples/

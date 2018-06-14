@@ -642,74 +642,133 @@ initializeGUI();
         goToFrame(ui.status.currentFrame);
     end
     function generateTrainingSet()
-        param_questions = {
-            'Path: path to file to export'
-            'Scale: for resizing images'
-            'Horizontal orientation: animal is facing right/left if true (for mirroring)'
-            'Sigma: kernel size for confidence maps'
-            'Post shuffle: shuffle data before saving (useful for reproducible dataset order)'
-            'Test fraction: fraction of labeled data to hold out for testing'
-            };
+        
+        % Default save path
         defaultSavePath = ff(fileparts(boxPath), 'training', [get_filename(boxPath,true) '.h5']);
-        defaults = {defaultSavePath, 1, true, 5, true, 0};
-        answers = inputdlg(param_questions,'Generate training set',ones(size(param_questions)),string(defaults));
-        if isempty(answers); return; end
-
-        answers(2:end) = cf(@(x)eval(x),answers(2:end));
-        names = {'savePath','scale','horizontalOrientation','sigma','postShuffle','testFraction'}';
-        args = [names, answers]';
-
-        addToHistory('Generating training set.')
-
-        generate_training_set(boxPath,args{:});
+        defaultSavePath = get_new_filename(defaultSavePath,true);
+        
+        % Create dialog with parameters
+        [params, buttonPressed] = settingsdlg(...
+            'WindowWidth', 400,...
+            'title','Generate a training set', ...
+            'Description','Export a dataset for training based on the current labels.',...
+            'separator','General options',...
+            {'Save path';'savePath'}, defaultSavePath, ...
+            {'Scale - for resizing images';'scale'}, 1, ...
+            {'Sigma - kernel size for confidence maps';'sigma'}, 5, ...
+            {'Test set fraction - held out frames';'testFraction'},0.1,...
+            {'Shuffle - randomize saved dataset order';'postShuffle'}, true, ...
+            {'Compress - reduce file size, but slower to load';'compress'}, true, ...
+            'separator','Data mirroring',...
+            {'Mirror images - augment by flipping along the body axis';'mirroring'}, [true, false], ...
+            {'Animal orientation';'animalOrientation'},  {'left/right','top/bottom'} ...
+            );
+        
+        % Cancel if OK was not pressed (cancel or window closed)
+        if ~strcmpi(buttonPressed,'ok'); return; end
+        
+        % Convert listbox input to boolean for orientation
+        params.horizontalOrientation = strcmpi(params.animalOrientation,'left/right');
+        
+        % Check for existing save path
+        if exists(params.savePath)
+            answer = questdlg('Save path already exists, overwrite existing file?', 'Overwrite file', 'Overwrite', 'Cancel', 'Overwrite');
+            if ~strcmpi(answer, 'Overwrite'); return; end
+        end
+        
+        % Run!
+        generate_training_set(boxPath,params);
+        
+        % Log action
+        addToHistory('Generated training set.')
     end
     function fastTrain()
         % Generate a training set for fast training from current labels
-
-        param_questions = {
-            'Scale: for resizing images', 1
-            'Horizontal orientation: animal is facing right/left if true (for mirroring)', true
-            'Sigma: kernel size for confidence maps', 5
-            'Epochs: number of rounds of training', 15
-            'Validation fraction: fraction of images to leave out for validation', 0.1
-            'Rotation: angle of rotations to apply for augmentation during training', 5
-            };
-        defaults = param_questions(:,2);
-        param_questions = param_questions(:,1);
-        answers = inputdlg(param_questions,'Fast training parameters',ones(size(param_questions)),string(defaults));
-        if isempty(answers); return; end
-
-        % Parse user input
-        answers = cf(@(x)eval(x),answers);
-        fields = {'scale','horizontalOrientation','sigma','epochs','valFraction','rotateAngle'}';
-        answers = cell2struct(answers,fields);
-
-        % Generate training set file
-        dataPath = [tempname '.h5'];
-        dataPath = generate_training_set(boxPath,'savePath',dataPath,'scale',answers.scale,...
-            'horizontalOrientation',answers.horizontalOrientation,'sigma',answers.sigma,'normalizeConfmaps',true,...
-            'postShuffle',true,'testFraction',0);
-
-        % Build paths
-        basePath = fileparts(funpath(true)); % leap folder
-        modelsFolder = ff(fileparts(basePath), 'models', 'fast_train');
+        
+        % Build default output path
         runName = sprintf('%s-n=%d', datestr(now,'yymmdd_HHMMSS'), numLabeled);
-
-        % Log
+        defaultModelsFolder = ff(fileparts(boxPath), 'models');
+        
+        % Create dialog with parameters
+        [params, buttonPressed] = settingsdlg(...
+            'WindowWidth', 500,...
+            'title','Fast training', ...
+            'Description','Quickly train a model using current labels and predict on remaining frames as initialization.',...
+            'separator','Dataset',...
+            {'Scale - for resizing images';'scale'}, 1, ...
+            {'Sigma - kernel size for confidence maps';'sigma'}, 5, ...
+            'separator','Data mirroring',...
+            {'Mirror images - augment by flipping along the body axis';'mirroring'}, [true, false], ...
+            {'Animal orientation';'animalOrientation'}, {'left/right','top/bottom'}, ...
+            'separator','Model',...
+            {'Network architecture';'netName'},{'leap_cnn','hourglass','stacked_hourglass'},...
+            {'Filters - base number of filters for model';'filters'},64,...
+            {'Upsampling layers - use bilinear upsampling instead of transposed conv';'upsamplingLayers'},false,...
+            'separator','Training',...
+            {'Model path - folder to save run data to';'modelsFolder'},defaultModelsFolder,...
+            {'Rotate angle - augment data via random rotations';'rotateAngle'},5,...
+            {'Validation set fraction - frames used for validation';'valSize'},0.1,...
+            {'Epochs - number of rounds of training';'epochs'},15,...
+            {'Batch size - number of samples per batch';'batchSize'},50,...
+            {'Batches per epoch - number of batches of samples per round';'batchesPerEpoch'},50,...
+            {'Validation batches per epoch - number of batches to use for validation';'valBatchesPerEpoch'},10,...
+            {'Save every epoch - save weights from every epoch instead of just best+final';'saveEveryEpoch'},false,...
+            'separator','Training (advanced)',...
+            {'Reduce LR factor - drop learning rate when loss plateaus';'reduceLRFactor'},0.1,...
+            {'Reduce LR patience - wait after loss plateaus before reducing LR';'reduceLRPatience'},3,...
+            {'Reduce LR cooldown - wait after reducing LR before detecting plateau';'reduceLRCooldown'},0,...
+            {'Reduce LR min delta - minimum change in loss to not plateau';'reduceLRMinDelta'},1e-5,...
+            {'Reduce LR min LR - minimum LR to not drop below';'reduceLRMinLR'},1e-10,...
+            {'AMSGrad - optimizer variant for more emphasis on rare data';'amsgrad'},false ...
+            );
+        
+        % Cancel if OK was not pressed (cancel or window closed)
+        if ~strcmpi(buttonPressed,'ok'); return; end
+        
+        % Convert listbox input to boolean for orientation
+        params.horizontalOrientation = strcmpi(params.animalOrientation,'left/right');
+        
+        % Generate temporary training set file
+        dataPath = [tempname '.h5'];
+        dataPath = generate_training_set(boxPath,'savePath',dataPath,...
+            'scale',params.scale,...
+            'mirroring',params.mirroring,...
+            'horizontalOrientation',params.horizontalOrientation,...
+            'sigma',params.sigma, ...
+            'normalizeConfmaps',true,...
+            'postShuffle',true, ...
+            'testFraction',0);
+        
+        % Log action
         addToHistory(sprintf('Fast training (n = %d)', numLabeled))
-
+        
         % Create CLI command for training
+        basePath = fileparts(funpath(true));
         cmd = {
             'python'
             ['"' ff(basePath, 'training.py') '"']
             ['"' dataPath '"']
-            ['--base-output-path="' modelsFolder '"']
+            ['--base-output-path="' params.modelsFolder '"']
             ['--run-name="' runName '"']
-            '--net-name="leap_cnn"'
-            sprintf('--epochs=%d',answers.epochs)
-            sprintf('--val-size=%f', answers.valFraction)
-            sprintf('--rotate-angle=%d', answers.rotateAngle)
+            ['--net-name="' params.netName '"']
+            sprintf('--filters=%d',params.filters)
+            sprintf('--rotate-angle=%d', params.rotateAngle)
+            sprintf('--val-size=%f', params.valSize)
+            sprintf('--epochs=%d', params.epochs)
+            sprintf('--batch-size=%d', params.batchSize)
+            sprintf('--batches-per-epoch=%d', params.batchesPerEpoch)
+            sprintf('--val-batches-per-epoch=%d', params.valBatchesPerEpoch)
+            sprintf('--reduce-lr-factor=%f', params.reduceLRFactor)
+            sprintf('--reduce-lr-patience=%d', params.reduceLRPatience)
+            sprintf('--reduce-lr-cooldown=%d', params.reduceLRCooldown)
+            sprintf('--reduce-lr-min-delta=%f', params.reduceLRMinDelta)
+            sprintf('--reduce-lr-min-lr=%f', params.reduceLRMinLR)
             };
+        
+        if params.upsamplingLayers; cmd{end+1} = '--upsampling-layers'; end
+        if params.saveEveryEpoch; cmd{end+1} = '--save-every-epoch'; end
+        if params.amsgrad; cmd{end+1} = '--amsgrad'; end
+        
         cmd = strjoin(cmd);
         disp(cmd)
 
@@ -724,7 +783,7 @@ initializeGUI();
         delete(dataPath)
 
         % TODO: parse this out from python output?
-        modelPath = ff(modelsFolder, runName);
+        modelPath = ff(params.modelsFolder, runName);
 
         % Run trained model on data to initialize labels
         if exists(ff(modelPath, 'final_model.h5'))
