@@ -125,12 +125,15 @@ if params.mirroring
     try exptID = [exptID(:); exptID(:)]; catch; end
     try framesIdx = [framesIdx(:); framesIdx(:)]; catch; end
     try idxs = [idxs(:); idxs(:)]; catch; end
+    
+    % Update frame count
+    numFrames = size(box,4);
 end
 
 %% Post-shuffle
-shuffleIdx = vert(1:numFrames*2);
+shuffleIdx = vert(1:numFrames);
 if params.postShuffle
-    shuffleIdx = randperm(numFrames*2);
+    shuffleIdx = randperm(numFrames);
     box = box(:,:,:,shuffleIdx);
     labeledIdx = labeledIdx(shuffleIdx);
     try box_no_seg = box_no_seg(:,:,:,shuffleIdx); catch; end
