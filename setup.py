@@ -6,11 +6,11 @@ setup(
     author="Talmo Pereira",
     author_email="talmo@princeton.edu",
     install_requires=[
-        "numpy==1.14.1",
-        "h5py",
+        "numpy>=1.14.1",
+        "h5py>=2.7.1",
         "matplotlib",
         "PyQt5",
-        "opencv-python==3.4.0.12",
-        "clize==4.0.3"
+        "opencv-python>=3.4.0.12",
+        "clize>=4.0.3"
     ]
 )
