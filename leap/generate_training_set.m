@@ -66,10 +66,10 @@ attrs = h5att2struct(boxPath);
 
 %% Generate confidence maps
 stic;
-confmaps = NaN([boxSize, numJoints, numFrames],'single');
+confmaps = NaN([boxSize(1:2), numJoints, numFrames],'single');
 parfor i = 1:numFrames
     pts = joints(:,:,i);
-    confmaps(:,:,:,i) = pts2confmaps(pts,boxSize,params.sigma,params.normalizeConfmaps);
+    confmaps(:,:,:,i) = pts2confmaps(pts,boxSize(1:2),params.sigma,params.normalizeConfmaps);
 end
 stocf('Generated confidence maps') % 15 sec for 192x192x32x500
 varsize(confmaps)
