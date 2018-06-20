@@ -197,10 +197,10 @@ def train(data_path, *,
 
     # Save initial network
     model.save(os.path.join(run_path, "initial_model.h5"))
-    input_layers = [x.name for x in model.input_layers]
-    output_layers = [x.name for x in model.output_layers]
 
-    # Data augmentation
+    # Data generators/augmentation
+    input_layers = model.input_names
+    output_layers = model.output_names
     if len(input_layers) > 1 or len(output_layers) > 1:
         train_datagen = MultiInputOutputPairedImageAugmenter(input_layers, output_layers, box, confmap, batch_size=batch_size, shuffle=True, theta=(-rotate_angle, rotate_angle))
         val_datagen = MultiInputOutputPairedImageAugmenter(input_layers, output_layers, val_box, val_confmap, batch_size=batch_size, shuffle=True, theta=(-rotate_angle, rotate_angle))
