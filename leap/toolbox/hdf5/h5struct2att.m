@@ -13,6 +13,7 @@ names = fieldnames(S);
 for i = 1:numel(names)
     if islogical(S.(names{i})); S.(names{i}) = uint8(S.(names{i})); end
     if iscellstr(S.(names{i})); S.(names{i}) = strjoin(S.(names{i}),'\n'); end
+    if isstruct(S.(names{i})); continue; end % TODO: recursive group attributes
     h5writeatt(filepath, location, names{i}, S.(names{i}))
 end
 

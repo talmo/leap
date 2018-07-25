@@ -753,16 +753,16 @@ initializeGUI();
             ['--net-name="' params.netName '"']
             sprintf('--filters=%d',params.filters)
             sprintf('--rotate-angle=%d', params.rotateAngle)
-            sprintf('--val-size=%f', params.valSize)
+            sprintf('--val-size=%.5f', params.valSize)
             sprintf('--epochs=%d', params.epochs)
             sprintf('--batch-size=%d', params.batchSize)
             sprintf('--batches-per-epoch=%d', params.batchesPerEpoch)
             sprintf('--val-batches-per-epoch=%d', params.valBatchesPerEpoch)
-            sprintf('--reduce-lr-factor=%f', params.reduceLRFactor)
+            sprintf('--reduce-lr-factor=%.10f', params.reduceLRFactor)
             sprintf('--reduce-lr-patience=%d', params.reduceLRPatience)
             sprintf('--reduce-lr-cooldown=%d', params.reduceLRCooldown)
-            sprintf('--reduce-lr-min-delta=%f', params.reduceLRMinDelta)
-            sprintf('--reduce-lr-min-lr=%f', params.reduceLRMinLR)
+            sprintf('--reduce-lr-min-delta=%.10f', params.reduceLRMinDelta)
+            sprintf('--reduce-lr-min-lr=%.10f', params.reduceLRMinLR)
             };
         
         if params.upsamplingLayers; cmd{end+1} = '--upsampling-layers'; end

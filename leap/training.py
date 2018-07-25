@@ -177,7 +177,11 @@ def train(data_path, *,
     print("run_name:", run_name)
 
     # Create network
-    model = create_model(net_name, img_size, num_output_channels, filters=filters, amsgrad=amsgrad, upsampling_layers=upsampling_layers, summary=True)
+    if isinstance(net_name, keras.models.Model):
+        model = net_name
+        net_name = model.name
+    else:
+        model = create_model(net_name, img_size, num_output_channels, filters=filters, amsgrad=amsgrad, upsampling_layers=upsampling_layers, summary=True)
     if model == None:
         print("Could not find model:", net_name)
         return

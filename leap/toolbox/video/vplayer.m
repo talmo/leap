@@ -178,6 +178,7 @@ classdef vplayer < matlab.mixin.SetGet
             defaults.autotile = false; % tiles channels
             defaults.bookmarks = [];
             defaults.seekbar = false;
+            defaults.zoom = 1;
             h.params = parse_params(varargin, defaults);
             
             
@@ -272,6 +273,9 @@ classdef vplayer < matlab.mixin.SetGet
             % Redraw initial frame to trigger callbacks and etc.
             h.plot(h.idx);
             
+            % Initial zoom
+            h.zoom(h.params.zoom);
+            h.plot(h.idx);
             
             h.pb_timer = timer(...
                 'BusyMode','drop',...

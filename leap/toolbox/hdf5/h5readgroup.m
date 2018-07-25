@@ -36,6 +36,10 @@ if ~isempty(info.Datasets)
         dset_path = strsplit(datasets{i},'/');
         field_name = matlab.lang.makeValidName(dset_path{end});
         data.(field_name) = h5read(filepath, [group '/' datasets{i}]);
+        
+        if ~isempty(info.Datasets(i).Attributes)
+            data.Attributes.(datasets{i}) = h5att2struct(filepath, [group '/' datasets{i}]);
+        end
     end
 end
 
