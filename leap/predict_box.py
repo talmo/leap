@@ -59,7 +59,7 @@ def convert_to_peak_outputs(model, include_confmaps=False):
         return keras.Model(model.input, Maxima2D()(confmaps))
 
 
-def predict_box(box_path, model_path, out_path, *, box_dset="/box", epoch=None, verbose=True, overwrite=False, save_confmaps=False):
+def predict_box(box_path, model_path, out_path, *, box_dset="/box", epoch=None, verbose=True, overwrite=False, save_confmaps=False, batch_size=64):
     """
     Predict and save peak coordinates for a box.
 
@@ -71,6 +71,7 @@ def predict_box(box_path, model_path, out_path, *, box_dset="/box", epoch=None, 
     :param verbose: if True, prints some info and statistics during procesing
     :param overwrite: if True and out_path exists, file will be overwritten
     :param save_confmaps: if True, saves the full confidence maps as additional datasets in the output file (very slow)
+    :param batch_size: number of samples to evaluate at once per batch (see keras.Model API)
     """
 
     if verbose:
@@ -136,7 +137,7 @@ def predict_box(box_path, model_path, out_path, *, box_dset="/box", epoch=None, 
     # Evaluate
     t0 = time()
     if save_confmaps:
-        Ypk, confmaps = model_peaks.predict(X)
+        Ypk, confmaps = model_peaks.predict(X, batch_size=batch_size)
 
         # Quantize
         confmaps_min = confmaps.min()
@@ -147,7 +148,7 @@ def predict_box(box_path, model_path, out_path, *, box_dset="/box", epoch=None, 
         # Reshape
         confmaps = np.transpose(confmaps, (0, 3, 2, 1))
     else:
-        Ypk = model_peaks.predict(X)
+        Ypk = model_peaks.predict(X, batch_size=batch_size)
     prediction_runtime = time() - t0
     if verbose:
         print("Predicted [%.1fs]" % prediction_runtime)

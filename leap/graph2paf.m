@@ -26,21 +26,21 @@ E = size(edges,1);
 paf = cell(E,1);
 for i = 1:E
     % Pull out edge points
-    p1 = nodes(edges(i,1),:);
-    p2 = nodes(edges(i,2),:);
+    src = nodes(edges(i,2),:);
+    dst = nodes(edges(i,1),:);
     
     % Edge length
-    L = norm(p2 - p1, 2);
+    L = norm(dst - src, 2);
 
     % Unit vectors
-    V = (p2 - p1) ./ L; % pointing along edge
+    V = (dst - src) ./ L; % pointing along edge
     Vp = [-V(:,2), V(:,1)]; % perpendicular
 
     % Signed distance along edge
-    D1 = sum(V .* ([XX(:) YY(:)] - p1),2);
+    D1 = sum(V .* ([XX(:) YY(:)] - src),2);
 
     % Absolute distance orthogonal to edge
-    D2 = abs(sum(Vp .* ([XX(:) YY(:)] - p1),2));
+    D2 = abs(sum(Vp .* ([XX(:) YY(:)] - src),2));
 
     % Vector field mask
     paf_mask = reshape(D1 >= 0 & D1 <= L & D2 <= sigma, sz);

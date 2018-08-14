@@ -22,6 +22,7 @@
 
 import numpy as np
 
+import keras
 import keras.backend as K
 from keras.legacy import interfaces
 from keras.engine import Layer
@@ -33,6 +34,8 @@ from keras.backend import int_shape, permute_dimensions
 from keras.backend import tf
 
 from keras.layers import Conv2D, Add
+
+from packaging.version import parse as parse_version
 
 __all__ = ['UpSampling2D', 'Maxima2D']
 
@@ -116,7 +119,12 @@ class UpSampling2D(Layer):
     @interfaces.legacy_upsampling2d_support
     def __init__(self, size=(2, 2), data_format=None, interpolation='nearest', **kwargs):
         super(UpSampling2D, self).__init__(**kwargs)
-        self.data_format = conv_utils.normalize_data_format(data_format)
+        # Update to K.normalize_data_format after keras 2.2.0
+        if parse_version(keras.__version__) > parse_version("2.2.0"):
+            self.data_format = K.normalize_data_format(data_format)
+        else:
+            self.data_format = conv_utils.normalize_data_format(data_format)
+
         self.interpolation = interpolation
         self.size = conv_utils.normalize_tuple(size, 2, 'size')
         self.input_spec = InputSpec(ndim=4)
