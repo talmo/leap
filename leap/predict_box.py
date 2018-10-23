@@ -59,7 +59,7 @@ def convert_to_peak_outputs(model, include_confmaps=False):
         return keras.Model(model.input, Maxima2D()(confmaps))
 
 
-def predict_box(box_path, model_path, out_path, *, box_dset="/box", epoch=None, verbose=True, overwrite=False, save_confmaps=False, batch_size=64):
+def predict_box(box_path, model_path, out_path, *, box_dset="/box", epoch=None, verbose=True, overwrite=False, save_confmaps=False, batch_size=32):
     """
     Predict and save peak coordinates for a box.
 

@@ -28,7 +28,11 @@ for i = 1:numel(fns)
             h5savegroup(filepath, S.(fns{i}), dset, varargin{:})
         end
     else
-        h5save(filepath, S.(fns{i}), dset, varargin{:})
+        try
+            h5save(filepath, S.(fns{i}), dset, varargin{:})
+        catch
+            warning('Failed to save dataset: %s', dset)
+        end
     end
 end
 

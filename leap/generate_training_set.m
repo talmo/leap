@@ -202,14 +202,14 @@ h5save(savePath,confmaps,[],'compress',params.compress)
 % Testing data
 if numTestFrames > 0
     h5save(savePath,trainIdx)
-    h5savegroup(savePath,testing,[],'compress',params.compress)
+    h5savegroup(savePath,testing,'/testing','compress',params.compress)
 end
 
 % Metadata
 h5writeatt(savePath,'/confmaps','sigma',params.sigma)
 h5writeatt(savePath,'/confmaps','normalize',uint8(params.normalizeConfmaps))
 h5struct2att(savePath,'/',attrs)
-h5savegroup(savePath,skeleton)
+h5savegroup(savePath,skeleton,'/skeleton')
 h5writeatt(savePath,'/skeleton','jointNames',strjoin(jointNames,'\n'))
 
 stocf('Saved:\n%s', savePath)
