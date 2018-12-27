@@ -25,13 +25,13 @@ def show_pred(net, X, Y, joint_idx=0, alpha_pred=0.7, save_path=None, show_figur
         elif X.shape[-1] == 1 or X.shape[-1] == 3: # missing sample singleton
             X = X[None,...]
     if Y.ndim > 3:
-        Y = Y.squeeze()
+        Y = Y.squeeze(axis=0)
         
     # Predict
     Y2 = net.predict(X)
     if type(Y2) == list:
         Y2 = Y2[-1]
-    Y2 = Y2.squeeze()
+    Y2 = Y2.squeeze(axis=0)
     X = X.squeeze()
     
     # Find peaks
@@ -103,13 +103,13 @@ def show_confmap_grid(net, X, Y, plot=True, save_path=None, show_figure=False):
         elif X.shape[-1] == 1 or X.shape[-1] == 3: # missing sample singleton
             X = X[None,...]
     if Y.ndim > 3:
-        Y = Y.squeeze()
+        Y = Y.squeeze(axis=0)
         
     # Predict
     Y2 = net.predict(X)
     if type(Y2) == list:
         Y2 = Y2[-1]
-    Y2 = Y2.squeeze()
+    Y2 = Y2.squeeze(axis=0)
     X = X.squeeze()
     
     # Montage
