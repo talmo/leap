@@ -36,7 +36,7 @@ if exist(savePath,'file') > 0
 end
 
 % Create HDF5 file with infinite number of frames and GZIP compression
-h5create(savePath,'/box',[frameSize inf],'ChunkSize',[frameSize 1],'Deflate',1)
+h5create(savePath,'/box',[frameSize inf],'ChunkSize',[frameSize 1],'Deflate',1,'Datatype','uint8')
 
 %% Save
 buffer = cell(chunkSize,1);
