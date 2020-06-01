@@ -3,11 +3,9 @@
 
 **Looking to get some SLEAP?**
 
-We're getting ready to release the next version of LEAP, with full support for *multi-animal* pose tracking in addition to all of the functionality of the original LEAP.
+We've released the next version of LEAP, with full support for *multi-animal* pose tracking in addition to all of the functionality of the original LEAP.
 
-Stay tuned for announcements about the public release and accompanying preprint on Twitter: [@talmop](https://twitter.com/talmop) and [@MurthyLab](https://twitter.com/MurthyLab)
-
-Interested in helping us test out the software before we release? Feel free to shoot us an email with a little description or short clip of the videos you work with: `talmo@princeton.edu`
+***Check it out now at [sleap.ai](https://sleap.ai)!***
 
 ## Related software
 - [DeepLabCut](https://github.com/AlexEMG/DeepLabCut): The popular deep learning framework for pose estimation. Soon to support full multi-animal pose tracking!
@@ -15,7 +13,7 @@ Interested in helping us test out the software before we release? Feel free to s
 - [Animal Part Tracker](https://github.com/kristinbranson/APT): Supports multi-animal pose tracking and lots of other functionality!
 
 
-# LEAP (soon to be deprecated)
+# LEAP (deprecated)
 
 ![LEAP Estimates Animal Pose](https://raw.githubusercontent.com/talmo/leap/master/docs/supp_mov1-long_clip.gif "LEAP Estimates Animal Pose")
 
